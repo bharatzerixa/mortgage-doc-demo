@@ -1,0 +1,37 @@
+You are analyzing a document submitted to a mortgage loan file. Identify what type of document this is and which stipulation on the loan's required-document list it satisfies (if any).
+
+Today's date: {today}
+
+Borrower:
+{borrower}
+
+Required document list (stip list) for this loan. Each stip may have:
+- accepted_years: years that satisfy this stip (for tax docs, W-2s, etc.)
+- accepted_doc_age_days: max age in days for time-sensitive docs
+- status: missing | received | needs_review (already-received stips should not be matched again)
+
+{stip_list}
+
+Return JSON:
+{{
+  "doc_type": "pay_stub" | "w2" | "tax_return" | "bank_statement" | "photo_id" | "purchase_contract" | "mortgage_statement" | "insurance_declaration" | "ssa_award_letter" | "pension_statement" | "retirement_statement" | "profit_and_loss" | "other" | "unclear",
+  "doc_type_label": "human-readable label, e.g. 'Pay stub from Acme Corp dated 2025-03-15' or 'W-2 for tax year 2025'",
+  "matches_stip_index": integer index of the matching stip in the list above, or null if no match,
+  "match_confidence": "high" | "medium" | "low",
+  "match_reasoning": "1-sentence explanation of why this doc matches (or doesn't match) a stip",
+  "borrower_name_on_doc": string or null,
+  "borrower_name_matches": boolean or null,
+  "doc_year": integer (for year-specific docs like W-2 or tax returns), or null,
+  "doc_date": "YYYY-MM-DD" string (for time-sensitive docs like pay stubs), or null
+}}
+
+Matching rules — apply in order:
+1. If the document doesn't appear to be a mortgage-related doc, set doc_type to "unclear" or "other" and matches_stip_index to null.
+2. Identify the doc_type first. Then look only at stips whose name/notes are consistent with that type.
+3. For year-specific docs (W-2, tax return): the doc_year MUST be in the stip's accepted_years for a match. If the doc's year is one off (e.g. doc is {prior_year} but stip wants {two_years_back}), check whether the OTHER stip on the list accepts that year — match to that one instead.
+4. For time-sensitive docs (pay stubs, bank statements): the doc_date should be within accepted_doc_age_days of today's date. If older, you may still match but with confidence "low".
+5. Skip stips already marked "received" — match to the next un-received stip of the same type if available.
+6. Pay attention to borrower name. If the document is for a different person, set borrower_name_matches to false and match_confidence to low.
+7. If multiple stips of the same type are still missing (e.g. two pay stubs needed), match to whichever the doc best fits by date/year. Prefer the most recent.
+
+Return ONLY the JSON. No prose, no code fences.

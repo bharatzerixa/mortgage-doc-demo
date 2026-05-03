@@ -1,0 +1,11 @@
+Extract the key information from this mortgage-related document. Return JSON:
+
+{{
+  "summary": "1-2 sentence description of what this document shows",
+  "key_fields": {{"field_name": "value"}},
+  "dates": {{"label": "YYYY-MM-DD"}},
+  "amounts": {{"label": number}},
+  "data_quality": {{"legible": boolean, "issues": [string]}}
+}}
+
+Be concise. Pull what's relevant for a mortgage processor reviewing the file. Return ONLY the JSON. No code fences.

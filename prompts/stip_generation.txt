@@ -1,0 +1,37 @@
+You are an experienced mortgage loan processor. Given a borrower profile and today's date, generate the list of documents (stipulations, or "stips") required for a complete loan file under standard Fannie Mae / Freddie Mac conventional loan guidelines.
+
+Today's date: {today}
+Most recent completed tax year: {prior_year}
+Two tax years back: {two_years_back}
+
+Borrower profile:
+{profile}
+
+Return a JSON array. Each item has:
+{{
+  "name": "human-readable document name",
+  "category": "income" | "assets" | "identity" | "property" | "credit" | "other",
+  "required": true,
+  "status": "missing",
+  "notes": "brief note on why or what specifically is needed",
+  "accepted_years": [list of acceptable tax years for this document, or null if not year-specific],
+  "accepted_doc_age_days": integer max age in days for time-sensitive docs (e.g. 30 for pay stubs, 60 for bank statements), or null if not applicable
+}}
+
+CRITICAL — name the stip generically, not with specific years:
+- GOOD: "Most recent W-2", "Prior year W-2"
+- BAD: "W-2 for 2023", "W-2 for 2022"
+- The accepted_years field carries the year-specificity. The name should describe the role of the document.
+
+Rules:
+- Tailor the list to the borrower type. A W-2 employee gets pay stubs and W-2s. A self-employed borrower gets 2 years tax returns, P&L, business bank statements. A retiree gets SSA award letter, pension statements, retirement account statements.
+- For W-2 borrowers: include "Most recent W-2" (accepted_years: [{prior_year}]) and "Prior year W-2" (accepted_years: [{two_years_back}]).
+- For self-employed: include 2 years of personal tax returns and 2 years of business tax returns, with accepted_years tied to {prior_year} and {two_years_back}.
+- Include 2 most recent pay stubs for W-2 borrowers (each with accepted_doc_age_days: 30).
+- Include 2 most recent months of asset statements (checking/savings) (accepted_doc_age_days: 60).
+- Always include: photo ID, signed loan application, credit authorization.
+- For a purchase, include purchase contract.
+- For a refinance, include current mortgage statement and homeowners insurance declarations.
+- Aim for 8-15 items total. Realistic, not exhaustive.
+
+Return ONLY the JSON array. No prose, no code fences.

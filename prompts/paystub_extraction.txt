@@ -1,0 +1,33 @@
+You are analyzing a pay stub for a mortgage loan application. Extract these fields and return as JSON. Be precise — these values are used for income qualification under Fannie Mae / Freddie Mac guidelines.
+
+Schema:
+{{
+  "employer": {{"name": string or null, "address": string or null}},
+  "employee": {{"name": string or null, "address": string or null}},
+  "pay_period": {{
+    "start_date": "YYYY-MM-DD" or null,
+    "end_date": "YYYY-MM-DD" or null,
+    "pay_date": "YYYY-MM-DD" or null,
+    "frequency": "weekly"|"biweekly"|"semimonthly"|"monthly"|"unclear" or null
+  }},
+  "earnings": {{
+    "gross_pay_current_period": number or null,
+    "gross_pay_ytd": number or null,
+    "regular_hours": number or null,
+    "regular_rate": number or null,
+    "overtime_pay": number or null,
+    "bonus": number or null,
+    "commission": number or null
+  }},
+  "compensation_type": "hourly"|"salary"|"commission"|"mixed"|"unclear",
+  "data_quality": {{"legible": boolean, "complete": boolean, "issues": [string]}}
+}}
+
+Rules:
+1. Numbers are numbers, no $ or commas. "$2,450.00" -> 2450.
+2. Dates as YYYY-MM-DD. If only month/year is shown, use the 1st.
+3. If a field isn't visible, use null. Don't guess.
+4. Most recent pay period only (if multiple shown).
+5. Flag specific issues in data_quality.issues: "blurry", "page cut off", "YTD unreadable", etc.
+
+Return ONLY the JSON. No prose, no code fences.
