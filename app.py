@@ -5,10 +5,15 @@ from services.stip_generator import StipListGenerator
 from services.classifier import DocumentClassifier
 from services.paystub_extractor import PayStubExtractor
 from services.generic_extractor import GenericExtractor
+from services.followup_generator import FollowupGenerator
+from services.scrubber import PreSubmissionScrubber
 from ui.sidebar import Sidebar
 from ui.intake import IntakeView
 from ui.documents import DocumentsView
 from ui.review import ReviewView
+from ui.followup import FollowupView
+from ui.scrub import ScrubView
+from ui.done import DoneView
 
 
 st.set_page_config(page_title="BHS Mortgage Workflow", layout="wide")
@@ -33,6 +38,8 @@ def get_services():
             "classifier": DocumentClassifier(),
             "paystub_extractor": PayStubExtractor(),
             "generic_extractor": GenericExtractor(),
+            "followup_generator": FollowupGenerator(),
+            "scrubber": PreSubmissionScrubber(),
         }
     return st.session_state.services
 
@@ -55,6 +62,12 @@ def main():
         ).render()
     elif lf.stage == "review":
         ReviewView(lf).render()
+    elif lf.stage == "followup":
+        FollowupView(lf, services["followup_generator"]).render()
+    elif lf.stage == "scrub":
+        ScrubView(lf, services["scrubber"]).render()
+    elif lf.stage == "done":
+        DoneView(lf).render()
     else:
         st.title(f"Workflow stage: {lf.stage}")
         st.info("Coming next.")
