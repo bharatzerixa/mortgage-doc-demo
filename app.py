@@ -7,6 +7,7 @@ from services.paystub_extractor import PayStubExtractor
 from services.generic_extractor import GenericExtractor
 from services.followup_generator import FollowupGenerator
 from services.scrubber import PreSubmissionScrubber
+from services.inbox_seeder import InboxSeeder
 from ui.sidebar import Sidebar
 from ui.intake import IntakeView
 from ui.documents import DocumentsView
@@ -28,6 +29,7 @@ def get_loan_file() -> LoanFile:
 
 def reset_loan_file():
     st.session_state.loan_file = LoanFile()
+    st.session_state["inbox_seeded"] = False
 
 
 # --- Service container (built once per session) ---
@@ -48,6 +50,12 @@ def get_services():
 def main():
     lf = get_loan_file()
     services = get_services()
+
+    # Seed inbox when entering documents stage for the first time
+    if lf.stage == "documents" and not lf.pending_docs and not st.session_state.get("inbox_seeded"):
+        seeder = InboxSeeder()
+        seeder.seed(lf)
+        st.session_state["inbox_seeded"] = True
 
     Sidebar(lf, on_reset=reset_loan_file).render()
 

@@ -45,11 +45,11 @@ Default model: `claude-opus-4-5` (set on `LLMService.DEFAULT_MODEL`). If this er
 ## Workflow stages (from the LoanFile state machine)
 
 1. `intake` — Borrower info form. On submit, calls StipListGenerator → generates required-doc list. ✅ BUILT
-2. `documents` — Drag-drop multi-file upload. Each doc: classify → extract → mark stip received. Batch summary shows matched/unmatched per file. ✅ BUILT
-3. `review` — Show what's still missing, file completeness summary. NOT BUILT YET
-4. `followup` — Generate borrower follow-up message (email/SMS draft) requesting missing docs. NOT BUILT YET
-5. `scrub` — Pre-submission AI scrub: review the assembled file for common kickback reasons (income reconciliation, doc freshness, signature gaps, large unsourced deposits). NOT BUILT YET
-6. `done` — Submission-ready summary.
+2. `documents` — Inbox-and-review flow. Processor reviews documents that arrived from borrower portal. AI pre-classifies and extracts data; processor verifies and accepts. ✅ BUILT
+3. `review` — Show what's still missing, file completeness summary. ✅ BUILT
+4. `followup` — Generate borrower follow-up message (email/SMS draft) requesting missing docs. ✅ BUILT
+5. `scrub` — Pre-submission AI scrub: review the assembled file for common kickback reasons (income reconciliation, doc freshness, signature gaps, large unsourced deposits). ✅ BUILT
+6. `done` — Submission-ready summary. ✅ BUILT
 
 ## Key design decisions
 
@@ -58,22 +58,34 @@ Default model: `claude-opus-4-5` (set on `LLMService.DEFAULT_MODEL`). If this er
 - **Date awareness:** stip generator and classifier both receive `today`, `prior_year`, `two_years_back`. This was added after a bug where the model picked stale years for W-2 stips. Stips name the *role* (e.g. "Most recent W-2"), with `accepted_years` field carrying the year-specificity.
 - **Confidence-based status:** classifier returns `match_confidence` of high/medium/low. High/medium → stip flips to `received` (✅), low → `needs_review` (⚠️). Progress bar only counts `received`.
 - **Service objects are session-scoped** (built once in `app.py`, stored in `st.session_state.services`).
-- **Streamlit drag-drop styling** uses CSS targeting `data-testid` selectors — internal to Streamlit, may break on future versions, acceptable risk for a demo.
+- **Inbox-and-review flow (Stage 2):** Documents arrive from a simulated borrower portal into an inbox (`pending_docs`). The processor reviews each doc one by one — AI has already classified and extracted data, processor just verifies and clicks Accept. Documents that fail automatic validation at upload time (e.g., stale pay stubs) go directly to `rejected_docs` and never reach the processor's queue — borrower is auto-notified to resubmit. This flow positions the processor as supervisor of AI's work, not data entry clerk.
+- **Demo controls:** A "Simulate borrower upload" button in the sidebar (labeled clearly as a demo control) pops reserved documents into the inbox mid-demo to show real-time arrival. An `InboxSeeder` service pre-populates the inbox when advancing from stage 1 to stage 2, loading sample docs from `sample_docs/pending/`, `sample_docs/reserved/`, and `sample_docs/rejected/`.
+- **Rejected-at-upload section:** Stage 2 shows a separate section for rejected documents with reasons (e.g., "Pay stub is 47 days old, exceeds Fannie Mae 30-day window"). This demonstrates that bad documents never consume processor time — the system handles rejection and borrower notification automatically.
 
 ## What's already working
 
 - Borrower intake form with sensible defaults
 - Stip list generation tailored to borrower type (W-2 employee vs. self-employed vs. retired produces meaningfully different lists)
-- Drag-and-drop multi-file upload with custom-styled drop zone
-- Batch processing with progress bar
+- Inbox-and-review document flow (Stage 2):
+  - Documents pre-seeded from borrower portal simulation
+  - Pending review queue with received timestamps
+  - One-at-a-time review screen with AI classification + extraction pre-run
+  - Accept & file workflow
+  - Rejected-at-upload section showing auto-rejected documents
+  - Manual upload affordance for exception cases (email/fax/text docs)
+  - Simulate borrower upload button for mid-demo theatrics
 - Per-document classification + extraction
 - Pay stub extraction with Fannie Mae freshness check + auto-calculated monthly income (3 methods)
 - Generic extraction for non-pay-stub docs
-- Sidebar stepper showing workflow progress
+- Completeness review dashboard (Stage 3) with category breakdown
+- AI-generated borrower follow-up messages (Stage 4)
+- Pre-submission quality scrub with kickback detection (Stage 5)
+- Submission-ready summary (Stage 6)
+- Sidebar stepper showing workflow progress with inbox count
 - Sidebar stip list with ✅/⚠️/◯ status icons + progress bar
 - Borrower-name-mismatch detection
 - Date-aware year matching (W-2 for current year matches "Most recent W-2" stip)
-- Diagnostic batch summary panel after each upload showing per-file outcomes
+- Document versioning (replace/remove capabilities on filed documents)
 
 ## What's next (priority order)
 

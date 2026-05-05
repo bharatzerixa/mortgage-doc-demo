@@ -23,9 +23,15 @@ class Sidebar:
         st.sidebar.divider()
 
         self._render_stepper()
-        st.sidebar.divider()
-        self._render_borrower()
-        self._render_stip_list()
+
+        # Only show divider if there's borrower/stip content
+        if self.lf.borrower or self.lf.stip_list:
+            st.sidebar.divider()
+            self._render_borrower()
+            self._render_stip_list()
+
+        # Demo controls (only in documents stage)
+        self._render_demo_controls()
 
         st.sidebar.divider()
         if st.sidebar.button("🔄 Reset demo"):
@@ -37,13 +43,19 @@ class Sidebar:
             (i for i, (k, _) in enumerate(STAGES) if k == self.lf.stage), 0
         )
         st.sidebar.subheader("Workflow")
-        for i, (_, label) in enumerate(STAGES):
-            if i < current_idx:
-                st.sidebar.markdown(f"✅ {label}")
-            elif i == current_idx:
-                st.sidebar.markdown(f"**▶ {label}**")
+        for i, (stage_key, label) in enumerate(STAGES):
+            # Add inbox count for documents stage
+            if stage_key == "documents" and len(self.lf.pending_docs) > 0:
+                inbox_count = f" ({len(self.lf.pending_docs)} pending)"
             else:
-                st.sidebar.markdown(f"◯ {label}")
+                inbox_count = ""
+
+            if i < current_idx:
+                st.sidebar.markdown(f"✅ {label}{inbox_count}")
+            elif i == current_idx:
+                st.sidebar.markdown(f"**▶ {label}{inbox_count}**")
+            else:
+                st.sidebar.markdown(f"◯ {label}{inbox_count}")
 
     def _render_borrower(self):
         if not self.lf.borrower:
@@ -72,3 +84,31 @@ class Sidebar:
         st.sidebar.progress(
             pct / 100, text=f"File {pct}% complete ({received}/{total})"
         )
+
+    def _render_demo_controls(self):
+        """Demo controls section for simulate borrower upload"""
+        # Only show in documents stage
+        if self.lf.stage != "documents":
+            return
+
+        st.sidebar.divider()
+        st.sidebar.markdown("**─── Demo Controls ───**")
+
+        has_reserved = len(self.lf.reserved_docs) > 0
+
+        if has_reserved:
+            if st.sidebar.button("📥 Simulate borrower upload", use_container_width=True):
+                # Pop one doc from reserved_docs to pending_docs
+                doc = self.lf.reserved_docs.pop(0)
+                self.lf.pending_docs.append(doc)
+                st.rerun()
+        else:
+            st.sidebar.button(
+                "📥 Simulate borrower upload",
+                disabled=True,
+                use_container_width=True,
+                help="No more reserved documents"
+            )
+
+        if has_reserved:
+            st.sidebar.caption(f"({len(self.lf.reserved_docs)} demo doc(s) available)")

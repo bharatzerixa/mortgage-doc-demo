@@ -10,6 +10,27 @@ STAGES = ["intake", "documents", "review", "followup", "scrub", "done"]
 
 
 @dataclass
+class PendingDoc:
+    """Document that arrived from borrower portal but hasn't been reviewed yet"""
+    filename: str
+    file_bytes: bytes
+    media_type: str
+    received_at: datetime
+    classification: Optional[dict] = None
+    extraction: Optional[dict] = None
+
+
+@dataclass
+class RejectedDoc:
+    """Document that failed validation at upload time and was auto-rejected"""
+    filename: str
+    doc_label: str
+    reason: str
+    rejected_at: datetime
+    borrower_notified: bool = True
+
+
+@dataclass
 class UploadedDoc:
     filename: str
     classification: dict
@@ -28,6 +49,9 @@ class LoanFile:
     messages: List[dict] = field(default_factory=list)
     scrub_result: Optional[dict] = None
     uploaded_docs: List[UploadedDoc] = field(default_factory=list)
+    pending_docs: List[PendingDoc] = field(default_factory=list)
+    rejected_docs: List[RejectedDoc] = field(default_factory=list)
+    reserved_docs: List[PendingDoc] = field(default_factory=list)
 
     def advance_to(self, stage: str):
         if stage not in STAGES:
