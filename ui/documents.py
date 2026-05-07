@@ -259,7 +259,7 @@ class DocumentsView:
             st.info("💡 Click 'Download PDF' to view the full document. PDF preview is not available in the browser.")
         elif doc.media_type.startswith("image/"):
             # For images, display directly
-            st.image(doc.file_bytes, caption=doc.filename, use_column_width=True)
+            st.image(doc.file_bytes, caption=doc.filename, use_container_width=True)
         else:
             # Fallback for other types
             st.download_button(
