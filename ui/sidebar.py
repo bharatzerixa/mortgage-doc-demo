@@ -22,21 +22,47 @@ class Sidebar:
         st.sidebar.caption("Borrower Intake & Pre-Submission System — Prototype")
         st.sidebar.divider()
 
-        self._render_stepper()
+        # View toggle
+        self._render_view_toggle()
 
-        # Only show divider if there's borrower/stip content
-        if self.lf.borrower or self.lf.stip_list:
-            st.sidebar.divider()
-            self._render_borrower()
-            self._render_stip_list()
+        # Get active view
+        active_view = st.session_state.get("active_view", "processor")
 
-        # Demo controls (only in documents stage)
-        self._render_demo_controls()
+        # Only show processor sections in processor view
+        if active_view == "processor":
+            self._render_stepper()
+
+            # Only show divider if there's borrower/stip content
+            if self.lf.borrower or self.lf.stip_list:
+                st.sidebar.divider()
+                self._render_borrower()
+                self._render_stip_list()
+
+            # Demo controls (only in documents stage)
+            self._render_demo_controls()
 
         st.sidebar.divider()
         if st.sidebar.button("🔄 Reset demo"):
             self.on_reset()
             st.rerun()
+
+    def _render_view_toggle(self):
+        """Render view toggle between Processor and Borrower"""
+        st.sidebar.markdown("### 👤 View as:")
+        active_view = st.sidebar.radio(
+            "View as:",
+            options=["processor", "borrower"],
+            format_func=lambda x: "🏢 Processor" if x == "processor" else "👤 Borrower Portal",
+            key="active_view",
+            horizontal=False,
+            label_visibility="collapsed",
+        )
+
+        # Show visual indicator for active view
+        if active_view == "borrower":
+            st.sidebar.info("🌟 You're viewing the borrower portal")
+
+        st.sidebar.divider()
 
     def _render_stepper(self):
         current_idx = next(

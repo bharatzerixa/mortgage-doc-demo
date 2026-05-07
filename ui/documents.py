@@ -184,6 +184,11 @@ class DocumentsView:
 
         st.divider()
 
+        # Display the actual document
+        self._render_document_viewer(doc)
+
+        st.divider()
+
         # Display extraction results
         if doc.extraction:
             st.subheader("Extracted Data")
@@ -230,6 +235,38 @@ class DocumentsView:
             st.error(
                 f"⚠️ **Name Mismatch:** Document shows '{cls.get('borrower_name_on_doc')}', "
                 f"but file is for '{self.lf.borrower.name}'"
+            )
+
+    def _render_document_viewer(self, doc: PendingDoc):
+        """Display the actual document for review"""
+        st.subheader("📄 Document Preview")
+
+        # Show document based on media type
+        if doc.media_type == "application/pdf":
+            # For PDFs, show a download button and display using st.image (if possible)
+            # Note: Streamlit doesn't have native PDF viewer, so we show download option
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.caption(f"**{doc.filename}** (PDF)")
+            with col2:
+                st.download_button(
+                    label="📥 Download PDF",
+                    data=doc.file_bytes,
+                    file_name=doc.filename,
+                    mime=doc.media_type,
+                    use_container_width=True
+                )
+            st.info("💡 Click 'Download PDF' to view the full document. PDF preview is not available in the browser.")
+        elif doc.media_type.startswith("image/"):
+            # For images, display directly
+            st.image(doc.file_bytes, caption=doc.filename, use_column_width=True)
+        else:
+            # Fallback for other types
+            st.download_button(
+                label=f"📥 Download {doc.filename}",
+                data=doc.file_bytes,
+                file_name=doc.filename,
+                mime=doc.media_type,
             )
 
     def _render_review_actions(self, doc_index: int, doc: PendingDoc):
