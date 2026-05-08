@@ -33,6 +33,9 @@ class UploadView:
         # Upload zone
         self._render_upload_zone()
 
+        # Show rejected documents right after upload zone (better UX)
+        self._render_rejected_documents()
+
         st.divider()
 
         # Navigation buttons
@@ -175,6 +178,19 @@ class UploadView:
                     st.info(f"✅ All files have been processed. {total_accepted} accepted, {num_rejected} rejected. You can upload more files or click 'I'm done for now' below.")
                 else:
                     st.success(f"✅ All {total_accepted} file(s) have been processed and accepted. You can upload more files or click 'I'm done for now' below.")
+
+    def _render_rejected_documents(self):
+        """Show rejected documents with reasons right after upload zone"""
+        num_rejected = len(self.lf.rejected_docs)
+
+        if num_rejected > 0:
+            st.divider()
+            st.markdown("### ❌ Documents we couldn't accept")
+
+            for rejected in self.lf.rejected_docs:
+                with st.expander(f"❌ {rejected.filename}", expanded=True):
+                    st.error(f"**Reason:** {rejected.reason}")
+                    st.caption(f"Rejected at: {rejected.rejected_at.strftime('%Y-%m-%d %H:%M')}")
 
     def _process_uploaded_file(self, uploaded_file):
         """Process a single uploaded file with real-time feedback"""
