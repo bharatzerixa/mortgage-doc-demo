@@ -114,10 +114,49 @@ class BorrowerIntakeView:
 
                 self.lf.borrower = borrower
 
-                # Generate stip list
-                with st.spinner("Creating your document list..."):
-                    stip_list = self.stip_generator.generate(borrower)
-                    self.lf.stip_list = stip_list
+                # Generate stip list only if one doesn't exist yet
+                if not self.lf.stip_list:
+                    # Use a fixed demo stip list for consistency
+                    # (In production, this would call the AI generator)
+                    from models.stip import Stip
+
+                    # Common documents for all borrowers
+                    common_stips = [
+                        Stip(name="Government-issued photo ID", category="Identity", status="pending"),
+                        Stip(name="Signed Uniform Residential Loan Application (Form 1003)", category="Application", status="pending"),
+                        Stip(name="Credit authorization form", category="Application", status="pending"),
+                    ]
+
+                    # Income-specific documents based on employment type
+                    if employment_type == "Self-employed":
+                        income_stips = [
+                            Stip(name="Personal tax returns (most recent year)", category="Income", status="pending"),
+                            Stip(name="Personal tax returns (prior year)", category="Income", status="pending"),
+                            Stip(name="Business tax returns (most recent year)", category="Income", status="pending"),
+                            Stip(name="Business tax returns (prior year)", category="Income", status="pending"),
+                            Stip(name="Year-to-date Profit & Loss statement", category="Income", status="pending"),
+                            Stip(name="Year-to-date Balance Sheet", category="Income", status="pending"),
+                        ]
+                    else:  # W-2 employee or Other
+                        income_stips = [
+                            Stip(name="Most recent pay stub", category="Income", status="pending"),
+                            Stip(name="Prior pay stub", category="Income", status="pending"),
+                            Stip(name="Most recent W-2", category="Income", status="pending"),
+                            Stip(name="Prior year W-2", category="Income", status="pending"),
+                        ]
+
+                    # Assets and property documents (common to all)
+                    asset_property_stips = [
+                        Stip(name="Bank statement (most recent month)", category="Assets", status="pending"),
+                        Stip(name="Bank statement (prior month)", category="Assets", status="pending"),
+                        Stip(name="Purchase contract", category="Property", status="pending"),
+                        Stip(name="Current mortgage statement", category="Liabilities", status="pending"),
+                        Stip(name="Homeowners insurance declarations", category="Property", status="pending"),
+                    ]
+
+                    # Combine all stips
+                    demo_stips = common_stips + income_stips + asset_property_stips
+                    self.lf.stip_list = demo_stips
 
                 # Move to welcome stage
                 st.session_state["borrower_stage"] = "welcome"

@@ -46,6 +46,7 @@ class ReviewView:
         received_count = sum(1 for s in self.lf.stip_list if s.status == "received")
         needs_review_count = sum(1 for s in self.lf.stip_list if s.status == "needs_review")
         missing_count = sum(1 for s in self.lf.stip_list if s.status == "missing")
+        pending_docs_count = len(self.lf.pending_docs)
         total = len(self.lf.stip_list)
         pct = int(100 * received_count / total) if total else 0
 
@@ -57,19 +58,20 @@ class ReviewView:
             st.metric("Overall Progress", f"{pct}%", help="Based on received documents only")
 
         with col2:
-            st.metric("Received", f"{received_count}/{total}",
+            st.metric("Approved", f"{received_count}/{total}",
                      delta="Ready for submission" if received_count == total else None,
-                     delta_color="normal")
+                     delta_color="normal",
+                     help="Documents you've reviewed and approved")
 
         with col3:
-            color = "🟡" if needs_review_count > 0 else "🟢"
-            st.metric("Needs Review", f"{color} {needs_review_count}",
-                     help="Low confidence matches requiring processor attention")
+            color = "🔵" if pending_docs_count > 0 else "🟢"
+            st.metric("In Inbox", f"{color} {pending_docs_count}",
+                     help="Documents uploaded and awaiting your review")
 
         with col4:
             color = "🔴" if missing_count > 0 else "🟢"
-            st.metric("Still Missing", f"{color} {missing_count}",
-                     help="Documents not yet uploaded")
+            st.metric("Missing", f"{color} {missing_count}",
+                     help="Requirements not yet satisfied")
 
         # Overall status message
         if received_count == total:

@@ -366,11 +366,26 @@ class DocumentsView:
         received, total, _ = self.lf.stip_progress()
         st.subheader("File Status")
 
+        # Count pending documents
+        num_pending = len(self.lf.pending_docs)
+        num_needs_review = sum(1 for s in self.lf.stip_list if s.status == "needs_review")
+
         col_l, col_r = st.columns([3, 1])
         with col_l:
-            st.markdown(
-                f"**Progress:** {received} of {total} required documents received."
-            )
+            if num_pending > 0:
+                st.markdown(
+                    f"**Progress:** {received} of {total} requirements satisfied. "
+                    f"**{num_pending} document(s) uploaded and awaiting your review.**"
+                )
+            elif num_needs_review > 0:
+                st.markdown(
+                    f"**Progress:** {received} of {total} requirements satisfied. "
+                    f"**{num_needs_review} document(s) need review.**"
+                )
+            else:
+                st.markdown(
+                    f"**Progress:** {received} of {total} requirements satisfied."
+                )
             if self.lf.pending_docs:
                 st.caption(f"⏳ {len(self.lf.pending_docs)} document(s) still pending review")
 
